@@ -180,15 +180,19 @@ class TrendIndicators:
         slow_ema = df[price].ewm(span=slow_length, adjust=False).mean()
         
         # Calculate MACD line
-        result['macd'] = fast_ema - slow_ema
+        # result['macd'] = fast_ema - slow_ema
+        macd_ema = fast_ema - slow_ema
         
         # Calculate signal line
-        result['signal'] = result['macd'].ewm(span=signal_length, adjust=False).mean()
+        # result['signal'] = result['macd'].ewm(span=signal_length, adjust=False).mean()
+        signal = macd_ema.ewm(span=signal_length,adjust=False).mean()
         
         # Calculate histogram
-        result['histogram'] = result['macd'] - result['signal']
+        # result['histogram'] = result['macd'] - result['signal']
+        histogram = macd_ema - signal
         
-        return result
+        # return result
+        return macd_ema,signal,histogram
     
     def adx(self, df, length=14, adx_smoothing=14):
         """

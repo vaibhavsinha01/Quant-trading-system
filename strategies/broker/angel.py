@@ -1,4 +1,6 @@
-# this would contain the broker wrapper of angelonefrom SmartApi import SmartConnect  # or from SmartApi.smartConnect import SmartConnect
+# this would contain the broker wrapper of angelone 
+# the sample use for connection is there in the end
+from SmartApi import SmartConnect
 import pandas as pd
 import pyotp
 from logzero import logger
