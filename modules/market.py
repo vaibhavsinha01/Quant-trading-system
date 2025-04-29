@@ -1,0 +1,1 @@
+# this file tells how the market is going now

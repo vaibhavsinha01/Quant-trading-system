@@ -1,0 +1,1 @@
+# this file contains the code for trade management we can utilize the code in the classes

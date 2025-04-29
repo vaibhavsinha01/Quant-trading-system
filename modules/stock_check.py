@@ -1,0 +1,1 @@
+# this file decides whether the stock is of trending/reverting nature now.

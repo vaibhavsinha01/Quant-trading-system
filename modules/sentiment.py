@@ -1,0 +1,1 @@
+# this file tells about the sentiment of the stock

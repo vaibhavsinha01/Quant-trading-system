@@ -1,0 +1,1 @@
+# this file contains class which has rm part 
