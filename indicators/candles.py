@@ -57,8 +57,37 @@ class CandleIndicators:
     def dark_cloud_cover(self, df):
         return candlestick.dark_cloud_cover(df)
 
-    def spinning_top(self, df):
-        return candlestick.spinning_top(df)
+    def spinning_top(self, df, body_threshold=0.3, shadow_ratio=2.0):
+        """
+        Identifies spinning top candles in the DataFrame.
+        
+        Parameters:
+            df (pd.DataFrame): Must contain columns 'Open', 'High', 'Low', 'Close'.
+            body_threshold (float): Max ratio of real body to full candle range.
+            shadow_ratio (float): Min ratio of each shadow to real body.
+        
+        Returns:
+            pd.Series: Boolean Series where True indicates a spinning top candle.
+        """
+        open_ = df['open']
+        close = df['close']
+        high = df['high']
+        low = df['low']
+        
+        body = (close - open_).abs()
+        upper_shadow = high - open_.where(close > open_, close)
+        lower_shadow = open_.where(close > open_, close) - low
+        full_range = high - low
+
+        # Avoid division by zero
+        body = body.replace(0, 1e-6)
+
+        condition_body_small = body / full_range < body_threshold
+        condition_upper_long = upper_shadow / body > shadow_ratio
+        condition_lower_long = lower_shadow / body > shadow_ratio
+
+        return condition_body_small & condition_upper_long & condition_lower_long
+
 
     def three_white_soldiers(self, df):
         df['cdl_three_white_soldiers'] = 0
@@ -225,7 +254,11 @@ if __name__ == "__main__":
     # Instantiate the indicator class
     ci = CandleIndicators()
 
-    # Apply all indicator methods
+    # Apply methods that return updated DataFrames
+    df = ci.marubozu(df)
+    df['cdl_spinning_top'] = ci.spinning_top(df)
+
+    # Apply all in-place modification methods
     ci.rickshaw_man(df)
     ci.high_wave(df)
     ci.matching_low(df)
@@ -242,6 +275,9 @@ if __name__ == "__main__":
     ci.tower_top(df)
     ci.ladder_bottom(df)
     ci.upside_gap_two_crows(df)
+    ci.three_white_soldiers(df)
+    ci.three_black_crows(df)
+    ci.evening_star(df)
 
     # Display the resulting DataFrame with pattern columns
     pd.set_option('display.max_columns', None)
