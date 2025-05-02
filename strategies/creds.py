@@ -9,5 +9,5 @@ equity_choice = 0 # changed from 0
 exchange = "NSE" # - used 
 token_id = "3045" # - used # "99926000" # "2885" # "3045" # token_id = "11536" # token_id = "99926000" # token_id="12815"# token_id="9931"
 tradingsymbol = "SBIN-EQ" # - used # "NIFTY50" # "SBIN-EQ" # changed from SBIN-EQ # tradingsymbol = "SBIN-EQ" # tradingsymbol = "TCS-EQ" # tradingsymbol = "NIFTY50" #tradingsymbol="TATAINVEST-BL" # tradingsymbol="VIKASLIFE-EQ"
-timeframe = "FIFTEEN_MINUTE"
-use_data_for_x_days = 100
+timeframe = "ONE_DAY"
+use_data_for_x_days = 3000

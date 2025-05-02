@@ -6,6 +6,40 @@ from candlestick import candlestick
 class CandleIndicators:
     def __init__(self):
         pass
+
+    def calculate_HeikenAshi_indicators(self,df):
+        print("OHLC is being renamed")
+
+        df.rename(columns={
+            'Open': 'open',
+            'Close': 'close',
+            'High': 'high',
+            'Low': 'low',
+            'Volume':'volume'
+        }, inplace=True)
+
+        print("Heiken-Ashi is being calculated")
+
+        df['HA_close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
+        df['HA_open'] = 0.0
+
+        df.at[0, 'HA_open'] = (df.at[0, 'open'] + df.at[0, 'close']) / 2
+        for i in range(1, len(df)):
+            df.at[i, 'HA_open'] = (df.at[i-1, 'HA_open'] + df.at[i-1, 'HA_close']) / 2 
+
+        df['HA_high'] = df[['high', 'HA_open', 'HA_close']].max(axis=1)
+        df['HA_low'] = df[['low', 'HA_open', 'HA_close']].min(axis=1)
+        df.drop(columns=['open', 'high', 'low', 'close'], inplace=True)
+        df[['HA_open', 'HA_close', 'HA_high', 'HA_low']] = df[['HA_open', 'HA_close', 'HA_high', 'HA_low']].round(2)
+
+        df.rename(columns={
+            'HA_open': 'open',
+            'HA_close': 'close',
+            'HA_high': 'high',
+            'HA_low': 'low'
+        }, inplace=True)
+
+        return df
     
     def marubozu(self, df):
         df['cdl_marubozu'] = np.where(
@@ -198,6 +232,33 @@ class CandleIndicators:
                 df['close'][i] < df['open'][i] and
                 df['close'][i] == df['close'][i-2]):
                 df.at[i, 'cdl_stick_sandwich'] = 1
+    
+    def harris_signal(self,df):
+        df['harris_signal'] = 0
+        for i in range(3,len(df)):
+            if(
+                df['high'].iloc[i]>df['high'].iloc[i-1] and
+                df['high'].iloc[i-1]>df['low'].iloc[i] and
+                df['low'].iloc[i]>df['high'].iloc[i-2] and
+                df['high'].iloc[i-2]>df['low'].iloc[i-1] and
+                df['low'].iloc[i-1]>df['high'].iloc[i-3] and
+                df['high'].iloc[i-3]>df['low'].iloc[i-2] and
+                df['low'].iloc[i-2]>df['low'].iloc[i-3]
+            ):
+                df.at[i,'harris_signal'] = 1
+            
+            elif(
+                df['high'].iloc[i]<df['high'].iloc[i-1] and
+                df['high'].iloc[i-1]<df['low'].iloc[i] and
+                df['low'].iloc[i]<df['high'].iloc[i-2] and
+                df['high'].iloc[i-2]<df['low'].iloc[i-1] and
+                df['low'].iloc[i-1]<df['high'].iloc[i-3] and
+                df['high'].iloc[i-3]<df['low'].iloc[i-2] and
+                df['low'].iloc[i-2]<df['low'].iloc[i-3]
+            ):
+                df.at[i,'harris_signal'] = -1
+        
+        return df['harris_signal']
 
     def three_inside_up(self, df):
         df['cdl_three_inside_up'] = 0

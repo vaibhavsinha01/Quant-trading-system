@@ -6,8 +6,10 @@ from indicators.volatility import VolatilityIndicator
 from indicators.trend import TrendIndicators
 from indicators.momentum import MomentumIndicator
 from indicators.volume import VolumeIndicator
+from indicators.candles import CandleIndicators
 from broker.angel import AngelBrokerWrapper
 import creds 
+import time
 
 class Strategy1:
     def __init__(self):
@@ -20,6 +22,7 @@ class Strategy1:
         self.momenI = MomentumIndicator()
         self.volatI = VolatilityIndicator()
         self.volumI = VolumeIndicator()
+        self.candlI = CandleIndicators()
 
     def fetch_data(self):
         try:
@@ -47,27 +50,31 @@ class Strategy1:
             print(f"Error in fetch_data: {e}")
 
     def feature_engineering(self):
-        self.df = self.volatI.directional_volatility(self.df)
+        # self.df = self.volatI.directional_volatility(self.df)
+        self.candlI.calculate_HeikenAshi_indicators(self.df)
+        self.df['atr_roc'],self.df['atr_roc_ema'],self.df['directionality_vol'],self.df['vol_strength'] = self.volatI.directional_volatility(self.df,window=10)
         self.df['cci'] = self.momenI.cci(self.df)
         self.df['tsv'] = self.volumI.tsv(self.df)
         self.df['macd_ema'],self.df['macd_signal'],self.df['histogram'] = self.trendI.macd(self.df)
+        self.df['uo'] = self.momenI.uo(self.df)
         print(self.df)
+        self.df.to_csv("features.csv")
 
     def generate_signals(self):
         for i in range(len(self.df)):
-            if(self.df.loc[i,'macd_ema']>self.df.loc[i,'macd_signal'] and self.df.loc[i,'cci']>0 and self.df.loc[i,'tsv']>0):
+            if(self.df.loc[i,'macd_ema']>self.df.loc[i,'macd_signal'] and self.df.loc[i,'uo']>70 and self.df.loc[i,'tsv']>0):
                 self.df.loc[i,'signal'] = 1
 
-            elif(self.df.loc[i,'macd_ema']<self.df.loc[i,'macd_signal'] and self.df.loc[i,'cci']<0 and self.df.loc[i,'tsv']<0):
+            elif(self.df.loc[i,'macd_ema']<self.df.loc[i,'macd_signal'] and self.df.loc[i,'uo']<30 and self.df.loc[i,'tsv']<0):
                 self.df.loc[i,'signal'] = -1
 
             else:
                 self.df.loc[i,'signal'] = 0
         
         self.df.dropna(axis=0,inplace=True)
-        print(f"the current df is {self.df} the macd status is {self.df['macd_ema'].iloc[-1]>self.df['macd_signal'].iloc[-1]} cci status is {self.df['cci'].iloc[-1]>0} tsv status is {self.df['tsv'].iloc[-1]>0} latest overall signal is {self.df['signal'].iloc[-1]}")
+        print(f"the current df is {self.df} the macd status is {self.df['macd_ema'].iloc[-1]>self.df['macd_signal'].iloc[-1]} uo status is {self.df['uo'].iloc[-1]<30 or self.df['uo'].iloc[-1]>70} tsv status is {self.df['tsv'].iloc[-1]>0} latest overall signal is {self.df['signal'].iloc[-1]}")
 
-    def execute_signals(self):
+    def execute_signals(self): # the entire logic tm/rm/pm would be used here this is a simple application
         if self.df['signal'].iloc[-1] == 1:
             print("A buy signal will be placed")
             # self.broker.place_order()
@@ -78,10 +85,12 @@ class Strategy1:
             print("No trade would be currently placed")
 
     def run(self):
-        self.fetch_data()
-        self.feature_engineering()
-        self.generate_signals()
-        self.execute_signals()
+        while True:
+            self.fetch_data()
+            self.feature_engineering()
+            self.generate_signals()
+            self.execute_signals()
+            time.sleep(20)
 
 if __name__ == "__main__":
     s1 = Strategy1()

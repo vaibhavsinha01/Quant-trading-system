@@ -6,7 +6,7 @@ class VolatilityIndicator:
     def __init__(self):
         pass
     
-    def bbands(self, df, window=20, stdev_factor=2, price_col='close'):
+    def bbands(self, df, window=14, stdev_factor=2, price_col='close'):
         """
         Bollinger Bands
         
@@ -45,7 +45,8 @@ class VolatilityIndicator:
         # Calculate %B: (Price - Lower) / (Upper - Lower)
         result['bb_percent_b'] = (result[price_col] - result['bb_lower']) / (result['bb_upper'] - result['bb_lower'])
         
-        return result
+        # return result
+        return result['bb_middle'],result['bb_upper'],result['bb_lower'],result['bb_bandwidth'],result['bb_percent_b']
     
     def atr(self, df, window=14, high_col='high', low_col='low', close_col='close'):
         """
@@ -84,7 +85,8 @@ class VolatilityIndicator:
         # Clean up interim columns
         result.drop(['tr1', 'tr2', 'tr3', 'tr'], axis=1, inplace=True)
         
-        return result
+        # return result
+        return result['atr']
     
     def volatility_stop(self, df, atr_window=14, multiplier=3, high_col='high', low_col='low', close_col='close'):
         """
@@ -557,14 +559,19 @@ class VolatilityIndicator:
         
         # Calculate the rate of change of ATR
         result['atr_roc'] = result['atr'].pct_change(periods=window) * 100
+        atr_roc = result['atr'].pct_change(periods=window) * 100
         
         # Calculate EMA of ATR Rate of Change
         result['atr_roc_ema'] = result['atr_roc'].ewm(span=window, adjust=False).mean()
+        atr_roc_ema = result['atr_roc'].ewm(span=window, adjust=False).mean()
         
         # Create directional volatility indicator (positive = increasing volatility)
         result['directional_vol'] = np.where(result['atr_roc_ema'] > 0, 1, -1)
+        directional_vol = np.where(result['atr_roc_ema'] > 0, 1, -1)
         
         # Volatility trend strength
         result['vol_trend_strength'] = abs(result['atr_roc_ema'])
+        vol_trend_strength = abs(result['atr_roc_ema'])
         
-        return result
+        return atr_roc,atr_roc_ema,directional_vol,vol_trend_strength
+        # return result

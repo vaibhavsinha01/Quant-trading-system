@@ -113,7 +113,8 @@ class TrendIndicators:
             
             result[f'T3_{length}'] = t3
             
-        return result
+        # return result
+        return result[f'T3_8'],result[f'T3_13']
     
     def trend_lines(self, df, length=14, price='close'):
         """
@@ -140,7 +141,7 @@ class TrendIndicators:
         
         # Linear regression for trend direction
         result['trend'] = np.nan
-        
+    
         for i in range(length, len(df)):
             window = df[price].iloc[i-length:i]
             x = np.array(range(length))
@@ -150,7 +151,8 @@ class TrendIndicators:
             slope, intercept = np.polyfit(x, y, 1)
             result.iloc[i, result.columns.get_loc('trend')] = slope
             
-        return result
+        # return result
+        return result['support'],result['resistance'],result['trend']
     
     def macd(self, df, fast_length=12, slow_length=26, signal_length=9, price='close'):
         """
@@ -250,7 +252,7 @@ class TrendIndicators:
         result['-DI'] = minus_di
         result['ADX'] = adx
         
-        return result
+        return result['+DI'],result['-DI'],result['ADX']
     
     def parabolic_sar(self, df, af_start=0.02, af_step=0.02, af_max=0.2):
         """

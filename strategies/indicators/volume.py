@@ -173,23 +173,23 @@ class VolumeIndicator:
         raw_money_flow = typical_price * df['volume']
         
         # Get money flow direction
-        direction = np.sign(typical_price.diff())
+        diff = typical_price.diff()
         
-        # Calculate positive and negative money flow
-        positive_flow = (raw_money_flow * (direction > 0)).replace(0, np.nan)
-        negative_flow = (raw_money_flow * (direction < 0)).abs().replace(0, np.nan)
+        # Create positive and negative money flow series
+        positive_flow = pd.Series(np.where(diff > 0, raw_money_flow, 0), index=df.index)
+        negative_flow = pd.Series(np.where(diff < 0, raw_money_flow, 0), index=df.index)
         
         # Sum positive and negative money flows over the period
         positive_sum = positive_flow.rolling(window=length).sum()
         negative_sum = negative_flow.rolling(window=length).sum()
         
-        # Calculate money flow ratio
-        money_ratio = positive_sum / negative_sum
+        # Calculate money flow ratio (handle division by zero)
+        money_ratio = np.where(negative_sum != 0, positive_sum / negative_sum, 100)
         
         # Calculate MFI
         mfi = 100 - (100 / (1 + money_ratio))
         
-        return mfi
+        return pd.Series(mfi, index=df.index)
     
     def vwap(self, df, reset_period='D'):
         """
