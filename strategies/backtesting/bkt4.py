@@ -679,6 +679,7 @@ class MFI_MACD_Strategy(Strategy):
         ):
             sl = close + 2 * atr
             tp = close - 3 * atr
+            # self.buy(sl=sl,tp=tp)
             self.sell(sl=sl, tp=tp)
             self.entry_price = close
             self.atr_at_entry = atr
@@ -692,6 +693,7 @@ class MFI_MACD_Strategy(Strategy):
             sl = close - 2 * atr
             tp = close + 3 * atr
             self.buy(sl=sl, tp=tp)
+            # self.sell(sl=sl,tp=tp)
             self.entry_price = close
             self.atr_at_entry = atr
 
@@ -699,7 +701,8 @@ class MFI_MACD_Strategy(Strategy):
 # === Run Backtest ===
 
 if __name__ == '__main__':
-    df = pd.read_csv(r'C:\Users\vaibh\OneDrive\Desktop\qts\features.csv')
+    # df = pd.read_csv(r'C:\Users\vaibh\OneDrive\Desktop\qts\features.csv')
+    df = pd.read_csv(r"C:\Users\vaibh\OneDrive\Desktop\qts\strategies\modules\reliance_fetched_data_1year_15m.csv")
     df = df.rename(columns={
         'open': 'Open',
         'high': 'High',

@@ -816,3 +816,51 @@ class MomentumIndicator:
         chop = 100 * np.log10(atr_sum / (highest_high - lowest_low)) / np.log10(length)
         
         return chop
+
+    def squeeze_momentum(df, length=20, mult=2.0, lengthKC=20, multKC=1.5, use_truerange=True):
+        df = df.copy()
+
+        # Bollinger Bands
+        df['basis'] = df['close'].rolling(window=length).mean()
+        df['dev'] = mult * df['close'].rolling(window=length).std()
+        df['upperBB'] = df['basis'] + df['dev']
+        df['lowerBB'] = df['basis'] - df['dev']
+
+        # Keltner Channels
+        df['ma'] = df['close'].rolling(window=lengthKC).mean()
+        if use_truerange:
+            df['tr'] = np.maximum(df['high'] - df['low'],
+                        np.maximum(abs(df['high'] - df['close'].shift(1)),
+                                    abs(df['low'] - df['close'].shift(1))))
+        else:
+            df['tr'] = df['high'] - df['low']
+        
+        df['rangema'] = df['tr'].rolling(window=lengthKC).mean()
+        df['upperKC'] = df['ma'] + df['rangema'] * multKC
+        df['lowerKC'] = df['ma'] - df['rangema'] * multKC
+
+        # Squeeze conditions
+        df['sqzOn'] = (df['lowerBB'] > df['lowerKC']) & (df['upperBB'] < df['upperKC'])
+        df['sqzOff'] = (df['lowerBB'] < df['lowerKC']) & (df['upperBB'] > df['upperKC'])
+        df['noSqz'] = ~(df['sqzOn'] | df['sqzOff'])
+
+        # Squeeze momentum value
+        mid_high_low = (df['high'].rolling(lengthKC).max() + df['low'].rolling(lengthKC).min()) / 2
+        val_input = df['close'] - ((mid_high_low + df['close'].rolling(lengthKC).mean()) / 2)
+        df['val'] = val_input.rolling(window=lengthKC).apply(
+            lambda x: np.polyfit(range(len(x)), x, 1)[0] * (len(x) - 1) + np.polyfit(range(len(x)), x, 1)[1],
+            raw=False
+        )
+
+        # Bar color logic (optional for plotting)
+        df['val_prev'] = df['val'].shift(1)
+        df['bcolor'] = np.where(df['val'] > 0,
+                                np.where(df['val'] > df['val_prev'], 'lime', 'green'),
+                                np.where(df['val'] < df['val_prev'], 'red', 'maroon'))
+
+        df['scolor'] = np.where(df['noSqz'], 'blue',
+                                np.where(df['sqzOn'], 'black', 'gray'))
+
+        # return df[['val', 'bcolor', 'scolor', 'sqzOn', 'sqzOff', 'noSqz']]
+        
+        return df['val'],df['bcolor'],df['scolor'],df['sqzOn'],df['sqzOff'],df['noSqz']
