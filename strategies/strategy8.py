@@ -92,7 +92,9 @@ class SupertrendEma:
             quantity=quantity
         )
         print(f"TP order placed: {tp_order['data']['orderid']}")
-
+    
+    def close_related_tp_sl(self):
+        print('if either the tp/sl is hitted then the other would automatically close')
     
     def trade_execution(self):
         latest = self.df.iloc[-1]
@@ -121,6 +123,7 @@ class SupertrendEma:
             start_time = market_open_time - timedelta(days=100)
             self.df = self.broker.get_candle_data(exchange='NSE',symboltoken='3045',interval='ONE_DAY',fromdate=start_time,todate=current_time)
             self.indicator_calculation()
+            self.close_related_tp_sl() # implement this
             self.trade_execution()
             time.sleep(60)
 
